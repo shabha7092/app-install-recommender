@@ -1,0 +1,53 @@
+DEFINE extract_user_feature(union_click, user_engagement)
+RETURNS user_feature_data
+{
+engagement_data = FILTER $user_engagement BY bcookie IS NOT NULL AND bcookie != 'NA' AND (business_family == 'All News' OR business_family == 'All Sports' OR business_family == 'All Finance' OR business_family == 'All Front Page');
+
+
+project_engagement_data = FOREACH engagement_data GENERATE
+                          business_family as business_family,
+                          product_name as product_name,
+                          product_experience as product_experience,
+                          product_country as product_country,
+                          product_language as product_language,
+                          bcookie as bcookie,
+                          network_session_ids as network_session_ids,
+                          landing_session_ids as landing_session_ids,
+                          content_session_ids as content_session_ids,
+                          comment_session_ids as comment_session_ids,
+                          metrics as metrics,
+                          segments as segments;
+
+user_feature = FOREACH project_engagement_data GENERATE bcookie, business_family, (network_session_ids IS NULL ? 0 : (COUNT(network_session_ids) != 0 ? COUNT(network_session_ids) :  0)) AS property_visits:double, (metrics IS NULL ? 0 : (metrics#'cmmt_postnreply_click' IS NULL ? 0 : metrics#'cmmt_postnreply_click')) AS post_comments:double, (metrics IS NULL ? 0 : (metrics#'content_share_click' IS NULL ? 0 : metrics#'content_share_click')) AS article_shares:double,  (metrics IS NULL ? 0 : (metrics#'cmmt_open_other_click' IS NULL ? 0 : metrics#'cmmt_open_other_click')) AS read_comments:double, (metrics IS NULL ? 0 : (metrics#'cmmt_vote_click' IS NULL ? 0 : metrics#'cmmt_vote_click')) AS like_comments:double, (metrics IS NULL ? 0 :(metrics#'promoad_impression' IS NULL ? 0 : metrics#'promoad_impression')) AS promo_ads_impr:double, (metrics IS NULL ? 0 : (metrics#'promoad_click' IS NULL ? 0 : metrics#'promoad_click')) AS promo_ad_clicks:double, (metrics IS NULL ? 0 : (metrics#'classic_pageview' IS NULL ? 0 : metrics#'classic_pageview')) AS classic_page_view:double;
+
+group_user_feature = GROUP user_feature BY (bcookie, business_family);
+
+agg_user_feature = FOREACH group_user_feature GENERATE FLATTEN(group) AS (bcookie:chararray, business_family:chararray), SUM(user_feature.property_visits) AS property_visits:double, SUM(user_feature.post_comments) AS post_comments:double, SUM(user_feature.article_shares) AS article_shares:double, SUM(user_feature.read_comments) AS read_comments:double, SUM(user_feature.like_comments) AS like_comments:double, SUM(user_feature.promo_ads_impr) AS promo_ads_impr:double, SUM(user_feature.promo_ad_clicks) AS promo_ad_clicks:double, SUM(user_feature.classic_page_view) AS classic_page_view:double;
+
+SPLIT agg_user_feature INTO
+ user_feature_all_news IF (business_family == 'All News'),
+ user_feature_all_sports IF (business_family == 'All Sports'),
+ user_feature_all_finance IF (business_family == 'All Finance'),
+ user_feature_all_frontpage IF (business_family == 'All Front Page');
+
+SPLIT union_click INTO
+ news_click  IF (advertiser_acct_id == 1589950L),
+ sports_click IF (advertiser_acct_id == 1624400L),
+ finance_click IF (advertiser_acct_id == 1630090L),
+ frontpage_click IF (advertiser_acct_id != 1589950L OR advertiser_acct_id != 1624400L OR advertiser_acct_id != 1630090L);
+
+news_click_user_feature = JOIN news_click BY cbid, user_feature_all_news BY bcookie;
+sports_click_user_feature = JOIN sports_click BY cbid, user_feature_all_sports BY bcookie;
+finance_click_user_feature = JOIN finance_click BY cbid, user_feature_all_finance BY bcookie;
+frontpage_click_user_feature = JOIN frontpage_click BY cbid, user_feature_all_frontpage BY bcookie;
+
+news_click_user_feature = FOREACH news_click_user_feature GENERATE advertiser_acct_id AS advertiser_acct_id:long, cmpgn_id AS cmpgn_id:long, cbid AS bid:chararray, sid AS sid:chararray, mobile_id AS mobile_id:chararray, ad_id AS ad_id:long, receive_time AS receive_time:long, x_forwarded_by_ip AS x_forwarded_by_ip:chararray, user_agent AS user_agent:chararray, bias AS bias:double, property_visits AS property_visits:double, post_comments AS post_comments:double, article_shares AS article_shares:double, read_comments AS read_comments:double, like_comments AS like_comments:double, promo_ads_impr AS promo_ads_impr:double, promo_ad_clicks AS promo_ad_clicks:double, classic_page_view AS classic_page_view:double, label AS label:double;
+
+sports_click_user_feature = FOREACH sports_click_user_feature GENERATE advertiser_acct_id AS advertiser_acct_id:long, cmpgn_id AS cmpgn_id:long, cbid AS bid:chararray, sid AS sid:chararray, mobile_id AS mobile_id:chararray, ad_id AS ad_id:long, receive_time AS receive_time:long, x_forwarded_by_ip AS x_forwarded_by_ip:chararray, user_agent AS user_agent:chararray, bias AS bias:double, property_visits AS property_visits:double, post_comments AS post_comments:double, article_shares AS article_shares:double, read_comments AS read_comments:double, like_comments AS like_comments:double, promo_ads_impr AS promo_ads_impr:double, promo_ad_clicks AS promo_ad_clicks:double, classic_page_view AS classic_page_view:double, label AS label:double;
+
+finance_click_user_feature = FOREACH finance_click_user_feature GENERATE advertiser_acct_id AS advertiser_acct_id:long, cmpgn_id AS cmpgn_id:long, cbid AS bid:chararray, sid AS sid:chararray, mobile_id AS mobile_id:chararray, ad_id AS ad_id:long, receive_time AS receive_time:long, x_forwarded_by_ip AS x_forwarded_by_ip:chararray, user_agent AS user_agent:chararray, bias AS bias:double, property_visits AS property_visits:double, post_comments AS post_comments:double, article_shares AS article_shares:double, read_comments AS read_comments:double, like_comments AS like_comments:double, promo_ads_impr AS promo_ads_impr:double, promo_ad_clicks AS promo_ad_clicks:double, classic_page_view AS classic_page_view:double, label AS label:double;
+
+frontpage_click_user_feature = FOREACH frontpage_click_user_feature GENERATE advertiser_acct_id AS advertiser_acct_id:long, cmpgn_id AS cmpgn_id:long, cbid AS bid:chararray, sid AS sid:chararray, mobile_id AS mobile_id:chararray, ad_id AS ad_id:long, receive_time AS receive_time:long, x_forwarded_by_ip AS x_forwarded_by_ip:chararray, user_agent AS user_agent:chararray, bias AS bias:double, property_visits AS property_visits:double, post_comments AS post_comments:double, article_shares AS article_shares:double, read_comments AS read_comments:double, like_comments AS like_comments:double, promo_ads_impr AS promo_ads_impr:double, promo_ad_clicks AS promo_ad_clicks:double, classic_page_view AS classic_page_view:double, label AS label:double;
+
+$user_feature_data = UNION ONSCHEMA news_click_user_feature, sports_click_user_feature, finance_click_user_feature, frontpage_click_user_feature;
+};

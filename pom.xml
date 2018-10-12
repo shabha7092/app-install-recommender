@@ -1,0 +1,234 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.shabha.app</groupId>
+	<artifactId>app-install-pipeline</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<description>App Install Machine Learning Pipeline</description>
+
+
+	<properties>
+		<pig.version>0.14.0.17.1605240208</pig.version>
+		<testng.version>6.8.13</testng.version>
+		<pigunit.version>0.14.0.17.1605240208</pigunit.version>
+		<hadoop.version>2.7.2.7.1604210306</hadoop.version>
+		<gson.version>2.2.4</gson.version>
+		<httpclient.version>4.5.3</httpclient.version>
+		<vectorz.vresion>0.58.0</vectorz.vresion>
+		<datafu.version>1.3.1</datafu.version>
+		<spark.version>2.2.0</spark.version>
+		<sparkavro.version>4.0.0</sparkavro.version>
+		<sparksql.version>2.2.0</sparksql.version>
+		<pmml.version>1.3.2</pmml.version>
+		<json.version>1.1</json.version>
+		<sampling.version>1.0</sampling.version>
+		<math.version>2.0</math.version>
+		<maven.deploy.skip>true</maven.deploy.skip>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.testng</groupId>
+			<artifactId>testng</artifactId>
+			<version>${testng.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-minicluster</artifactId>
+			<version>${hadoop.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.pig</groupId>
+			<artifactId>pig</artifactId>
+			<version>0.17.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.pig</groupId>
+			<artifactId>piggybank</artifactId>
+			<version>0.17.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.pig</groupId>
+			<artifactId>pigunit</artifactId>
+			<version>0.17.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>yahoo.yinst.yjava_gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>${gson.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<version>${httpclient.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.spark</groupId>
+			<artifactId>spark-core_2.11</artifactId>
+			<version>${spark.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
+
+		<dependency>
+			<groupId>org.apache.spark</groupId>
+			<artifactId>spark-mllib_2.11</artifactId>
+			<version>${spark.version}</version>
+			<scope>provided</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.jpmml</groupId>
+					<artifactId>pmml-model</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<dependency>
+			<groupId>com.databricks</groupId>
+			<artifactId>spark-avro_2.11</artifactId>
+			<version>${sparkavro.version}</version>
+		</dependency>
+
+
+		<dependency>
+			<groupId>org.apache.spark</groupId>
+			<artifactId>spark-sql_2.11</artifactId>
+			<version>${sparksql.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.jpmml</groupId>
+			<artifactId>jpmml-sparkml</artifactId>
+			<version>${pmml.version}</version>
+		</dependency>
+
+
+		<dependency>
+			<groupId>net.mikera</groupId>
+			<artifactId>vectorz</artifactId>
+			<version>${vectorz.vresion}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.datafu</groupId>
+			<artifactId>datafu-pig-incubating</artifactId>
+			<version>${datafu.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.datafu</groupId>
+			<artifactId>datafu-hourglass-incubating</artifactId>
+			<version>${datafu.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/com.googlecode.json-simple/json-simple -->
+		<dependency>
+			<groupId>com.googlecode.json-simple</groupId>
+			<artifactId>json-simple</artifactId>
+			<version>${json.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>sampling</groupId>
+			<artifactId>sampling</artifactId>
+			<scope>system</scope>
+			<version>${sampling.version}</version>
+			<systemPath>${basedir}/src/main/grid/lib/sampling.jar</systemPath>
+		</dependency>
+
+		<dependency>
+			<groupId>common-math</groupId>
+			<artifactId>common-math</artifactId>
+			<scope>system</scope>
+			<version>${math.version}</version>
+			<systemPath>${basedir}/src/main/grid/lib/commons-math-2.0.jar</systemPath>
+		</dependency>
+
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<version>2.7.19</version>
+			<scope>test</scope>
+		</dependency>
+
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.3</version>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>enforce</id>
+						<phase>none</phase>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+					<archive>
+						<manifest>
+							<mainClass></mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+						<configuration>
+							<relocations>
+								<relocation>
+									<pattern>org.dmg.pmml</pattern>
+									<shadedPattern>org.shaded.dmg.pmml</shadedPattern>
+								</relocation>
+								<relocation>
+									<pattern>org.jpmml.agent</pattern>
+									<shadedPattern>org.shaded.jpmml.agent</shadedPattern>
+								</relocation>
+								<relocation>
+									<pattern>org.jpmml.model</pattern>
+									<shadedPattern>org.shaded.jpmml.model</shadedPattern>
+								</relocation>
+								<relocation>
+									<pattern>org.jpmml.schema</pattern>
+									<shadedPattern>org.shaded.jpmml.schema</shadedPattern>
+								</relocation>
+							</relocations>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+
+	</build>
+</project>

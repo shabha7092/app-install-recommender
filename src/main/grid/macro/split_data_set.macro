@@ -1,0 +1,14 @@
+-- Macro Definition
+
+DEFINE split_data(input_data, group_column, training_percentage, cross_validation_percentage)
+RETURNS training_data, cross_validation_data, testing_data
+{
+    flatten_data = FOREACH (GROUP $input_data BY $group_column) GENERATE FLATTEN($input_data);
+    data = FOREACH flatten_data GENERATE RANDOM() as random_assignment, *;
+    SPLIT data INTO training_data IF random_assignment <= $training_percentage,
+    cross_validation_data IF random_assignment > $training_percentage AND random_assignment <= $cross_validation_percentage,
+    testing_data OTHERWISE;
+    $training_data = foreach training_data generate $1..;
+    $cross_validation_data = foreach cross_validation_data generate $1..;
+    $testing_data = foreach testing_data generate $1..;
+};

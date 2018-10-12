@@ -1,0 +1,216 @@
+<workflow-app xmlns="uri:oozie:workflow:0.5" name="app_install_1d_wf">
+
+	<global>
+		<job-tracker>${jobTracker}</job-tracker>
+		<name-node>${nameNode}</name-node>
+		<configuration>
+			<property>
+				<name>mapreduce.map.tasks.speculative.execution</name>
+				<value>true</value>
+			</property>
+			<property>
+				<name>mapreduce.reduce.tasks.speculative.execution</name>
+				<value>true</value>
+			</property>
+			<property>
+				<name>dfs.umaskmode</name>
+				<value>022</value>
+			</property>
+			<property>
+				<name>mapreduce.job.acl-view-job</name>
+				<value>*</value>
+			</property>
+			<property>
+				<name>mapreduce.child.java.opts</name>
+				<value>-Xmx3072m</value>
+			</property>
+			<property>
+				<name>mapreduce.input.fileinputformat.split.minsize</name>
+				<value>4294967296</value>
+			</property>
+			<property>
+				<name>pig.splitCombination</name>
+				<value>true</value>
+			</property>
+			<property>
+				<name>pig.maxCombinedSplitSize</name>
+				<value>4294967296</value>
+			</property>
+			<property>
+				<name>mapreduce.child.java.opts</name>
+				<value>-Xmx3072m</value>
+			</property>
+			<property>
+				<name>mapreduce.cluster.map.memory.mb</name>
+				<value>4096</value>
+			</property>
+			<property>
+				<name>mapreduce.job.map.memory.mb</name>
+				<value>4096</value>
+			</property>
+			<property>
+				<name>mapreduce.job.reduce.memory.mb</name>
+				<value>4096</value>
+			</property>
+			<property>
+				<name>oozie.action.sharelib.for.pig</name>
+				<value>pig_current,hive_current,hcat_current</value>
+			</property>
+			<property>
+				<name>output.compression.enabled</name>
+				<value>true</value>
+			</property>
+			<property>
+				<name>output.compression.codec</name>
+				<value>org.apache.hadoop.io.compress.GzipCodec</value>
+			</property>
+			<property>
+				<name>mapreduce.job.queue.name</name>
+				<value>${queueName}</value>
+			</property>
+			<property>
+				<name>mapreduce.map.env</name>
+				<value>LD_LIBRARY_PATH=${nativeLibPath}</value>
+			</property>
+			<property>
+				<name>mapreduce.reduce.env</name>
+				<value>LD_LIBRARY_PATH={nativeLibPath}></value>
+			</property>
+			<property>
+				<name>oozie.launcher.mapreduce.job.hdfs-servers</name>
+				<value>${nameNode},${nameNodeSecondary}</value>
+			</property>
+			<property>
+				<name>mapreduce.job.hdfs-servers</name>
+				<value>${nameNode},${nameNodeSecondary}</value>
+			</property>
+		</configuration>
+	</global>
+
+
+	<credentials>
+		<credential name='hcatauth' type='hcat'>
+			<property>
+				<name>hcat.metastore.uri</name>
+				<value>${hcatThriftUri}</value>
+			</property>
+			<property>
+				<name>hcat.metastore.principal</name>
+				<value>${hcatPrincipal}</value>
+			</property>
+		</credential>
+	</credentials>
+
+
+	<start to="app_install_impression_action" />
+
+	<action name="app_install_impression_action" cred="hcatauth">
+		<pig>
+			<prepare>
+				<delete path="${APP_INSTALL_IMPRESSION_DATA}" />
+			</prepare>
+			<script>${nameNode}${appRoot}/app_install_impression.pig</script>
+			<param>IMPRESSION_DATA=${IMPRESSION_DATA}</param>
+			<param>APP_INSTALL_IMPRESSION_DATA=${APP_INSTALL_IMPRESSION_DATA}
+			</param>
+		</pig>
+		<ok to="app_install_click_action" />
+		<error to="sendEmail" />
+	</action>
+
+	<action name="app_install_click_action" cred="hcatauth">
+		<pig>
+			<prepare>
+				<delete path="${APP_INSTALL_CLICK_DATA}" />
+			</prepare>
+			<script>${nameNode}${appRoot}/app_install_click.pig</script>
+			<param>CLICK_DATA=${CLICK_DATA}</param>
+			<param>APP_INSTALL_CLICK_DATA=${APP_INSTALL_CLICK_DATA}</param>
+		</pig>
+		<ok to="app_install_conversion_action" />
+		<error to="sendEmail" />
+	</action>
+
+	<action name="app_install_conversion_action" cred="ykeykeyauth">
+		<pig>
+			<prepare>
+				<delete path="${APP_INSTALL_CONVERSION_DATA}" />
+				<delete path="${MAPPED_DATA}" />
+			</prepare>
+			<script>${nameNode}${appRoot}/app_install_conversion.pig</script>
+			<param>APP_INSTALL_CLICK_DATA=${APP_INSTALL_CLICK_DATA}</param>
+			<param>CONVERSION_DATA=${CONVERSION_DATA}</param>
+			<param>CONVERSION_FILTER_START_DATE=${CONVERSION_FILTER_START_DATE}
+			</param>
+			<param>CONVERSION_FILTER_END_DATE=${CONVERSION_FILTER_END_DATE}
+			</param>
+			<param>APP_INSTALL_CONVERSION_DATA=${APP_INSTALL_CONVERSION_DATA}
+			</param>
+			<param>MAPPED_DATA=${MAPPED_DATA}</param>
+		</pig>
+		<ok to="app_install_label_action" />
+		<error to="sendEmail" />
+	</action>
+
+	<action name="app_install_label_action" cred="hcatauth">
+		<pig>
+			<prepare>
+				<delete path="${APP_INSTALL_LABEL_DATA}" />
+			</prepare>
+			<script>${nameNode}${appRoot}/app_install_label.pig</script>
+			<param>MACRO_PATH=${MACRO_PATH}</param>
+			<param>APP_INSTALL_CLICK_DATA=${APP_INSTALL_CLICK_DATA}</param>
+			<param>APP_INSTALL_CONVERSION_DATA=${APP_INSTALL_CONVERSION_DATA}
+			</param>
+			<param>USER_ENGAGEMENT_DATA=${USER_ENGAGEMENT_DATA}</param>
+			<param>APP_INSTALL_LABEL_DATA=${APP_INSTALL_LABEL_DATA}</param>
+		</pig>
+		<ok to="app_install_model_action" />
+		<error to="sendEmail" />
+	</action>
+
+	<action name="app_install_model_action" cred="hcatauth">
+		<spark xmlns="uri:oozie:spark-action:0.2">
+			<prepare>
+				<delete path="${APP_INSTALL_MODEL}" />
+			</prepare>
+			<configuration>
+				<property>
+					<name>oozie.action.sharelib.for.spark</name>
+					<value>spark_latest</value>
+				</property>
+			</configuration>
+			<master>yarn</master>
+			<mode>cluster</mode>
+			<name>App-Install-Model</name>
+			<class>com.shabha.app.grid.model.LRModelGeneratorAvro</class>
+			<jar>app-install-pipeline-jar-with-dependencies.jar</jar>
+			<spark-opts>--queue default --conf spark.ui.view.acls=*</spark-opts>
+			<arg>${APP_INSTALL_LABEL_DATA}</arg>
+			<arg>${APP_INSTALL_MODEL_CONFIG}</arg>
+			<arg>${APP_INSTALL_MODEL}</arg>
+			<arg>${test_flag}</arg>
+		</spark>
+		<ok to="sendEmail" />
+		<error to="fail" />
+	</action>
+
+	<action name="sendEmail">
+		<email xmlns="uri:oozie:email-action:0.1">
+			<to>${alert_email}</to>
+			<subject>App Install Model Generation for ${PROCESS_TIME} has failed
+			</subject>
+			<body>App Install Model Generation for ${PROCESS_TIME} has failed.
+				Workflow name: ${wf:name()}. Workflow id: ${wf:id()}</body>
+		</email>
+		<ok to="end" />
+		<error to="fail" />
+	</action>
+
+	<kill name="fail">
+		<message>App Install Model Generation for ${PROCESS_TIME} has Failed,
+			error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
+	</kill>
+
+	<end name="end" />
+</workflow-app>
