@@ -13,8 +13,6 @@ import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import yjava.security.ysecure.SymmetricContext;
-import yjava.security.ysecure.YCR;
 import com.google.common.base.Strings;
 
 
@@ -22,7 +20,7 @@ public class ExtractBid extends EvalFunc<String> {
 
     private static final Logger LOG = LoggerFactory.getLogger(ExtractBid.class);
     private static final Pattern BID_PATTERN = Pattern.compile("bid=\\[(.*?)\\]", Pattern.CASE_INSENSITIVE);
-    private SymmetricContext symmetricContext;
+    
 
 
     @Override
@@ -51,40 +49,11 @@ public class ExtractBid extends EvalFunc<String> {
         String decryptedBid = "";
         Matcher matcher = BID_PATTERN.matcher(tuple);
         while (matcher.find()) {
-            decryptedBid = decrypt(matcher.group(1));
+            decryptedBid = matcher.group(1);
         }
         return decryptedBid;
     }
 
-    private String decrypt(String keyToDecrypt) throws Exception {
-        if (!Strings.isNullOrEmpty(keyToDecrypt)) {
-            SymmetricContext symmetricContext = null;
-            String decryptedKey = null;
-            try {
-                decryptedKey = getSymmetricContext().decryptSign64(keyToDecrypt, null);
-            } catch (Exception e) {
-                LOG.error("GetBidOrSidFromParams: Decryption Logic Failed");
-                throw new Exception(e);
-            } finally {
-                if (symmetricContext != null) {
-                    symmetricContext.close();
-                }
-            }
-            if (decryptedKey != null) {
-                return decryptedKey.substring(5);
-            }
-        }
-        return "";
-    }
-    
-    private SymmetricContext getSymmetricContext() throws Exception {
-        if (symmetricContext == null) {
-            YCR ycr = YCR.createYCR();
-            byte[] secret = UserGroupInformation.getCurrentUser().getCredentials().getSecretKey(new Text("ykeykeyauth"));
-            symmetricContext = ycr.createSymmetricContextFromSecret(secret);
-        }
-        return symmetricContext;
-    }
     
     @Override
     public Schema outputSchema(Schema input) {
